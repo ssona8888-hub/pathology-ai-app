@@ -13,7 +13,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🔬 Patho-Assist Pro")
-st.write("Upload histology images or use the direct camera for AI analysis.")
 
 # --- API Key is now HIDDEN and pulled securely from Streamlit Secrets ---
 try:
@@ -22,37 +21,60 @@ except:
     st.error("Admin setup required: Secrets not configured.")
     st.stop()
 
-# --- 2. Camera & Upload Options ---
-tab1, tab2 = st.tabs(["📷 Direct Camera", "📁 Upload Photos"])
-image_files = []
+# --- 2. Box 1: Patient History ---
+st.markdown("### 📝 1. Patient History (1 Image)")
+hist_tab1, hist_tab2 = st.tabs(["📷 Direct Camera", "📁 Upload Photo"])
+history_file = None
 
-with tab1:
-    camera_photo = st.camera_input("Microscope se photo lein")
-    if camera_photo:
-        image_files.append(camera_photo)
+with hist_tab1:
+    hist_cam = st.camera_input("History ki photo lein", key="hist_cam")
+    if hist_cam: 
+        history_file = hist_cam
 
-with tab2:
-    # Upload limit changed to 8
-    uploaded_slides = st.file_uploader("Upload Slides / History (Up to 8 Images)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
-    if uploaded_slides:
-        # Strictly limit to 8 images
-        image_files.extend(uploaded_slides[:8])
+with hist_tab2:
+    hist_up = st.file_uploader("Upload History Note", type=['png', 'jpg', 'jpeg'], key="hist_up")
+    if hist_up: 
+        history_file = hist_up
 
-# --- 3. Medical AI Execution ---
+# --- 3. Box 2: Microscopic Slides ---
+st.markdown("### 🔬 2. Microscopic Slides (Up to 8 Images)")
+slide_type = st.radio("Select Slide Type:", ["Histopathology", "Cytopathology"], horizontal=True)
+
+slide_tab1, slide_tab2 = st.tabs(["📷 Direct Camera", "📁 Upload Photos"])
+slide_files = []
+
+with slide_tab1:
+    slide_cam = st.camera_input("Microscope se photo lein", key="slide_cam")
+    if slide_cam: 
+        slide_files.append(slide_cam)
+
+with slide_tab2:
+    slide_up = st.file_uploader("Upload Slides", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="slide_up")
+    if slide_up:
+        slide_files.extend(slide_up[:8])
+
+# --- 4. Medical AI Execution ---
 if st.button("🔍 Generate Diagnosis"):
-    if not image_files:
-        st.error("Kripya kam se kam ek photo (Camera ya Upload) zarur dein.")
+    # Limit check
+    if len(slide_files) > 8:
+        st.warning("Aapne 8 se zyada photos daali hain. Sirf pehli 8 photos analyze hongi.")
+        slide_files = slide_files[:8]
+        
+    # Validation checks
+    if not history_file:
+        st.error("Kripya Patient History ki photo zaroor daalein.")
+    elif not slide_files:
+        st.error("Kripya kam se kam ek Microscopic Slide ki photo zaroor daalein.")
     else:
-        # Ensure total images don't exceed 8 even if mixed from camera and upload
-        if len(image_files) > 8:
-            st.warning("Aapne 8 se zyada photos daali hain. Sirf pehli 8 photos analyze hongi.")
-            image_files = image_files[:8]
+        # Smart Warning for less than 5 images
+        if len(slide_files) < 5:
+            st.warning("⚠️ Smart Warning: Optimal accuracy ke liye kam se kam 5 alag-alag fields ki photos zaroori hain. (Analysis continue ho raha hai...)")
             
-        with st.spinner("Medical AI analyzing visual morphology..."):
+        with st.spinner(f"Medical AI analyzing {slide_type} morphology..."):
             try:
-                # Placeholder for UI testing
-                st.success("App is successfully connected to the hidden Master API Key! ✅")
-                st.info(f"Total {len(image_files)} images ready for analysis. Jab Dr7.ai ka connection code final hoga, result yahan aayega.")
+                # Placeholder UI testing confirmation
+                st.success("App UI bilkul ready hai! ✅ (Master API Key se connected)")
+                st.info(f"Target: {slide_type}. Total {len(slide_files)} slide images + History received. Jab endpoint final hoga, result yahan dikhega.")
                 
             except Exception as e:
                 st.error(f"Connection Error: {e}")
