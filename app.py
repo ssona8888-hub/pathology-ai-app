@@ -5,38 +5,56 @@ st.set_page_config(page_title="Patho-Assist", layout="centered")
 
 st.markdown("""
 <style>
-    /* 1. Force columns to stay side-by-side on mobile screens */
-    div[data-testid="stHorizontalBlock"] {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 10px !important;
-    }
-    
-    div[data-testid="column"] {
-        width: 50% !important;
-        flex: 1 1 50% !important;
-        min-width: 50% !important;
-        padding: 0 !important;
-    }
-
-    /* 2. Hide extra text and empty space in File Uploader */
-    div[data-testid="stFileUploadDropzone"] {
-        padding: 5px !important;
-    }
+    /* 1. Hide the huge drag-and-drop box texts completely */
     div[data-testid="stFileUploadDropzone"] > div > div > span,
     div[data-testid="stFileUploadDropzone"] > div > div > small {
         display: none !important;
     }
+    
+    /* 2. Make the uploader box super thin and WhatsApp-like (Pill shape) */
+    div[data-testid="stFileUploadDropzone"] {
+        padding: 0px !important;
+        min-height: 55px !important;
+        border-radius: 30px !important;
+        background-color: #f0f2f6;
+        border: 1px solid #ccc !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* 3. Change "Browse files" text to our custom WhatsApp-like Icons */
+    div[data-testid="stFileUploadDropzone"] button {
+        width: 100%;
+        height: 100%;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: transparent !important; /* Hide original text */
+        position: relative;
+    }
+    
+    /* Custom Text and Icons inside the button */
+    div[data-testid="stFileUploadDropzone"] button::after {
+        content: "📷 Camera   /   📎 Gallery";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: #333 !important;
+        font-size: 16px !important;
+        font-weight: bold;
+        visibility: visible;
+    }
 
-    /* 3. Make Analyze button huge and easy to press */
+    /* 4. Large Generate Diagnosis Button */
     .stButton>button { 
         height: 60px; 
         font-size: 20px; 
         font-weight: bold; 
         background-color: #004d99; 
         color: white; 
-        border-radius: 8px; 
+        border-radius: 30px; 
         width: 100%; 
         margin-top: 15px;
     }
@@ -55,16 +73,7 @@ except:
 # SECTION 1: PATIENT HISTORY
 # ==========================================
 st.markdown("### 📝 1. Patient History")
-col1, col2 = st.columns(2)
-history_file = None
-
-with col1:
-    hist_cam = st.camera_input("Camera", key="h_cam", label_visibility="collapsed")
-    if hist_cam: history_file = hist_cam
-with col2:
-    hist_up = st.file_uploader("Upload", type=['png','jpg','jpeg'], key="h_up", label_visibility="collapsed")
-    if hist_up: history_file = hist_up
-
+history_file = st.file_uploader("Upload", type=['png','jpg','jpeg'], key="h_up", label_visibility="collapsed")
 
 # ==========================================
 # SECTION 2: MICROSCOPIC SLIDES
@@ -72,29 +81,24 @@ with col2:
 st.markdown("### 🔬 2. Microscopic Slides")
 slide_type = st.radio("Type:", ["Histopathology", "Cytopathology"], horizontal=True, label_visibility="collapsed")
 
-col3, col4 = st.columns(2)
-slide_files = []
-
-with col3:
-    slide_cam = st.camera_input("Camera", key="s_cam", label_visibility="collapsed")
-    if slide_cam: slide_files.append(slide_cam)
-with col4:
-    slide_up = st.file_uploader("Upload", type=['png','jpg','jpeg'], accept_multiple_files=True, key="s_up", label_visibility="collapsed")
-    if slide_up: slide_files.extend(slide_up[:8])
-
+# Accept up to 8 multiple files
+slide_files = st.file_uploader("Upload", type=['png','jpg','jpeg'], accept_multiple_files=True, key="s_up", label_visibility="collapsed")
 
 # ==========================================
 # SECTION 3: ANALYZE BUTTON
 # ==========================================
-if st.button("🔍 Analyze Now"):
-    if len(slide_files) > 8:
-        slide_files = slide_files[:8]
+if st.button("🔍 Generate Diagnosis"):
+    # Ensure slide_files is a list even if empty
+    slide_list = slide_files if slide_files else []
+    
+    if len(slide_list) > 8:
+        slide_list = slide_list[:8]
         
     if not history_file:
-        st.warning("⚠️ Kripya Patient History upload karein.")
-    elif not slide_files:
+        st.warning("⚠️ Kripya Patient History ki photo dein.")
+    elif not slide_list:
         st.warning("⚠️ Kripya kam se kam ek Slide photo dein.")
     else:
         with st.spinner(f"AI is analyzing {slide_type}..."):
-            st.success("App UI is Ready! The Camera and Upload are now permanently side-by-side. ✅")
+            st.success("App UI is Perfect! Koi right-slide nahi, sirf WhatsApp jaisa simple icon button! ✅")
             
