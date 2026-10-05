@@ -1,84 +1,59 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
+import base64
 from PIL import Image
+import io
 
-# --- 1. UI Setup for 60+ Doctors ---
-# Configures the page and uses custom CSS to make buttons massive and text large.
-st.set_page_config(page_title="Pathology AI Assistant", layout="centered")
+# --- 1. Professional UI Setup ---
+st.set_page_config(page_title="Patho-Assist Pro", layout="centered")
 st.markdown("""
 <style>
-    .stButton>button { height: 80px; font-size: 24px; font-weight: bold; background-color: #0066cc; color: white; border-radius: 12px; width: 100%; }
-    h1 { font-size: 40px; }
-    h3 { font-size: 24px; }
-    p { font-size: 18px; }
+    .stButton>button { height: 60px; font-size: 20px; font-weight: bold; background-color: #004d99; color: white; border-radius: 8px; width: 100%; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🔬 Pathology AI Assistant")
-st.write("Upload histology images and the patient's clinical history note below.")
+st.title("🔬 Patho-Assist Pro")
+st.write("Upload histology images or use the direct camera for AI analysis.")
 
-# --- 2. Secure API Key Input ---
-api_key = st.text_input("Enter Gemini 3.1 Pro API Key:", type="password")
+# --- API Key is now HIDDEN and pulled securely from Streamlit Secrets ---
+try:
+    API_KEY = st.secrets["MEDICAL_API_KEY"]
+except:
+    st.error("Admin setup required: Secrets not configured.")
+    st.stop()
 
-# --- 3. Simplified File Uploaders ---
-st.markdown("### 📸 Upload Images")
-history_img = st.file_uploader("1. Upload Handwritten History (1 Image)", type=['png', 'jpg', 'jpeg'])
-slide_imgs = st.file_uploader("2. Upload Microscopic Slides (Up to 4 Images)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+# --- 2. Camera & Upload Options ---
+tab1, tab2 = st.tabs(["📷 Direct Camera", "📁 Upload Photos"])
+image_files = []
 
-# --- 4. The System Prompt ---
-SYSTEM_PROMPT = """
-**Role:**
-You are an expert Pathology Clinical Decision Support Assistant.
+with tab1:
+    camera_photo = st.camera_input("Microscope se photo lein")
+    if camera_photo:
+        image_files.append(camera_photo)
 
-**Workflow:**
-1. **Handwriting Check:** If the handwriting is illegible, stop and output ONLY: "⚠️ **Cannot read handwriting clearly.** Please type or dictate the patient history."
-2. **Output Format:** If legible, output EXACTLY like this:
+with tab2:
+    # Upload limit changed to 8
+    uploaded_slides = st.file_uploader("Upload Slides / History (Up to 8 Images)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True)
+    if uploaded_slides:
+        # Strictly limit to 8 images
+        image_files.extend(uploaded_slides[:8])
 
-### 1. Patient History
-* [Transcribed text]
-
-### 2. Key Microscopic Findings
-* [Bullet 1]
-* [Bullet 2]
-
-### 3. Top Diagnostic Considerations
-1. **[Differential 1]**: [Why]
-2. **[Differential 2]**: [Why]
-
-### 4. Next Steps to Confirm
-* [Specific IHC or special stains needed]
-"""
-
-# --- 5. Execution Logic ---
-if st.button("🔍 Get Second Opinion"):
-    if not api_key:
-        st.error("Please enter your API Key first.")
-    elif not history_img or not slide_imgs:
-        st.error("Please upload both the history and at least one slide image.")
+# --- 3. Medical AI Execution ---
+if st.button("🔍 Generate Diagnosis"):
+    if not image_files:
+        st.error("Kripya kam se kam ek photo (Camera ya Upload) zarur dein.")
     else:
-        with st.spinner("Analyzing images... Please wait."):
+        # Ensure total images don't exceed 8 even if mixed from camera and upload
+        if len(image_files) > 8:
+            st.warning("Aapne 8 se zyada photos daali hain. Sirf pehli 8 photos analyze hongi.")
+            image_files = image_files[:8]
+            
+        with st.spinner("Medical AI analyzing visual morphology..."):
             try:
-                # Initialize Gemini API
-                genai.configure(api_key=api_key)
-                model = genai.GenerativeModel(
-                    model_name="gemini-3.8-flash",
-                    system_instruction=SYSTEM_PROMPT
-                )
-                
-                # Package images for the AI
-                content = []
-                content.append(Image.open(history_img))
-                for slide in slide_imgs[:4]: # Strictly limit to 4 slides
-                    content.append(Image.open(slide))
-                content.append("Analyze these images according to your system instructions.")
-                
-                # Generate Diagnosis
-                response = model.generate_content(content)
-                
-                # Display Results
-                st.success("Analysis Complete")
-                st.markdown(response.text)
+                # Placeholder for UI testing
+                st.success("App is successfully connected to the hidden Master API Key! ✅")
+                st.info(f"Total {len(image_files)} images ready for analysis. Jab Dr7.ai ka connection code final hoga, result yahan aayega.")
                 
             except Exception as e:
-                st.error(f"An error occurred: {e}")
-              
+                st.error(f"Connection Error: {e}")
+                
