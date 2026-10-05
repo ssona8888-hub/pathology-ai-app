@@ -61,7 +61,7 @@ if st.button("🔍 Get Second Opinion"):
                 # Initialize Gemini API
                 genai.configure(api_key=api_key)
                 model = genai.GenerativeModel(
-                    model_name="gemini-3.1-pro",
+                    model_name="gemini-1.5-pro",
                     system_instruction=SYSTEM_PROMPT
                 )
                 
