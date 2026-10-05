@@ -4,78 +4,109 @@ import base64
 from PIL import Image
 import io
 
-# --- 1. Professional UI Setup ---
-st.set_page_config(page_title="Patho-Assist Pro", layout="centered")
+# --- 1. SUPER SIMPLE UI SETUP ---
+st.set_page_config(page_title="Patho-Assist", layout="centered")
+
+# Styling for Big, Easy Buttons (like WhatsApp)
 st.markdown("""
 <style>
-    .stButton>button { height: 60px; font-size: 20px; font-weight: bold; background-color: #004d99; color: white; border-radius: 8px; width: 100%; }
+    /* Main Analyze Button */
+    .stButton>button { 
+        height: 70px; 
+        font-size: 24px; 
+        font-weight: bold; 
+        background-color: #004d99; 
+        color: white; 
+        border-radius: 12px; 
+        width: 100%; 
+        margin-top: 20px;
+    }
+    
+    /* Make headers bigger */
+    h3 { font-size: 26px !important; color: #333; margin-bottom: 5px; }
+    
+    /* Small text instruction */
+    .instruct { font-size: 16px; color: #666; margin-bottom: 15px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🔬 Patho-Assist Pro")
+st.title("🔬 Patho-Assist")
+st.markdown("<div class='instruct'>Upload photos for AI Analysis. Fast & Simple.</div>", unsafe_allow_html=True)
 
-# --- API Key is now HIDDEN and pulled securely from Streamlit Secrets ---
+# --- API Key (Hidden) ---
 try:
     API_KEY = st.secrets["MEDICAL_API_KEY"]
 except:
-    st.error("Admin setup required: Secrets not configured.")
+    st.error("Setup Error. Contact Admin.")
     st.stop()
 
-# --- 2. Box 1: Patient History ---
-st.markdown("### 📝 1. Patient History (1 Image)")
-hist_tab1, hist_tab2 = st.tabs(["📷 Direct Camera", "📁 Upload Photo"])
+# ==========================================
+# SECTION 1: PATIENT HISTORY
+# ==========================================
+st.markdown("### 📝 1. Patient History")
+st.markdown("<div class='instruct'>Take a photo of the form or upload from gallery.</div>", unsafe_allow_html=True)
+
+# Create two columns for buttons side-by-side
+col1, col2 = st.columns(2)
 history_file = None
 
-with hist_tab1:
-    hist_cam = st.camera_input("History ki photo lein", key="hist_cam")
-    if hist_cam: 
-        history_file = hist_cam
+with col1:
+    hist_cam = st.camera_input("📷 Camera", key="hist_cam")
+    if hist_cam: history_file = hist_cam
 
-with hist_tab2:
-    hist_up = st.file_uploader("Upload History Note", type=['png', 'jpg', 'jpeg'], key="hist_up")
-    if hist_up: 
-        history_file = hist_up
+with col2:
+    hist_up = st.file_uploader("⬆️ Upload (Gallery)", type=['png', 'jpg', 'jpeg'], key="hist_up")
+    if hist_up: history_file = hist_up
 
-# --- 3. Box 2: Microscopic Slides ---
-st.markdown("### 🔬 2. Microscopic Slides (Up to 8 Images)")
-slide_type = st.radio("Select Slide Type:", ["Histopathology", "Cytopathology"], horizontal=True)
 
-slide_tab1, slide_tab2 = st.tabs(["📷 Direct Camera", "📁 Upload Photos"])
+st.markdown("---") # Divider line
+
+# ==========================================
+# SECTION 2: MICROSCOPIC SLIDES
+# ==========================================
+st.markdown("### 🔬 2. Microscopic Slides")
+st.markdown("<div class='instruct'>Select type, then take up to 8 photos.</div>", unsafe_allow_html=True)
+
+slide_type = st.radio("Slide Type:", ["Histopathology", "Cytopathology"], horizontal=True)
+
+col3, col4 = st.columns(2)
 slide_files = []
 
-with slide_tab1:
-    slide_cam = st.camera_input("Microscope se photo lein", key="slide_cam")
-    if slide_cam: 
-        slide_files.append(slide_cam)
+with col3:
+    slide_cam = st.camera_input("📷 Camera", key="slide_cam")
+    if slide_cam: slide_files.append(slide_cam)
 
-with slide_tab2:
-    slide_up = st.file_uploader("Upload Slides", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="slide_up")
-    if slide_up:
-        slide_files.extend(slide_up[:8])
+with col4:
+    slide_up = st.file_uploader("⬆️️ Upload (Gallery)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="slide_up")
+    if slide_up: slide_files.extend(slide_up[:8])
 
-# --- 4. Medical AI Execution ---
-if st.button("🔍 Generate Diagnosis"):
+
+st.markdown("---") # Divider line
+
+# ==========================================
+# SECTION 3: ANALYZE BUTTON
+# ==========================================
+if st.button("🔍 Analyze Now"):
     # Limit check
     if len(slide_files) > 8:
-        st.warning("Aapne 8 se zyada photos daali hain. Sirf pehli 8 photos analyze hongi.")
         slide_files = slide_files[:8]
         
     # Validation checks
     if not history_file:
-        st.error("Kripya Patient History ki photo zaroor daalein.")
+        st.warning("⚠️ Please provide Patient History first.")
     elif not slide_files:
-        st.error("Kripya kam se kam ek Microscopic Slide ki photo zaroor daalein.")
+        st.warning("⚠️ Please provide at least one Slide Photo.")
     else:
         # Smart Warning for less than 5 images
         if len(slide_files) < 5:
-            st.warning("⚠️ Smart Warning: Optimal accuracy ke liye kam se kam 5 alag-alag fields ki photos zaroori hain. (Analysis continue ho raha hai...)")
+            st.info("💡 Tip: For best results, use 5 or more slide photos. (Analyzing now...)")
             
-        with st.spinner(f"Medical AI analyzing {slide_type} morphology..."):
+        with st.spinner(f"AI is analyzing {slide_type}... Please wait."):
             try:
                 # Placeholder UI testing confirmation
-                st.success("App UI bilkul ready hai! ✅ (Master API Key se connected)")
-                st.info(f"Target: {slide_type}. Total {len(slide_files)} slide images + History received. Jab endpoint final hoga, result yahan dikhega.")
+                st.success("App UI is Ready and Super Simple! ✅")
+                st.info(f"Received: History + {len(slide_files)} Slides. Ready for Dr7.ai API.")
                 
             except Exception as e:
-                st.error(f"Connection Error: {e}")
+                st.error(f"Error: {e}")
                 
