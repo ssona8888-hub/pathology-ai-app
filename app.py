@@ -65,7 +65,7 @@ try:
     # Use GEMINI_API_KEY from secrets
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     # Using Gemini 1.5 Pro for better image recognition
-    model = genai.GenerativeModel('gemini-1.5-pro') 
+    model = genai.GenerativeModel('gemini-3.8-flash') 
 except Exception as e:
     st.error("⚠️ Setup Error: Kripya Streamlit Secrets mein apni GEMINI_API_KEY set karein.")
     st.stop()
